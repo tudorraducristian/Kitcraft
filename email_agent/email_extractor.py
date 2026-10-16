@@ -14,31 +14,16 @@ class LLMClient(Protocol):
     def complete_vision(self, system: str, content_blocks: list[dict]) -> str: ...
 
 
-_SYSTEM_PROMPT_BASE = """Ești un asistent care extrage cereri de produse personalizate din emailuri de business.
+# Prompturile stau în prompts/*.md, lângă discovery.md și inspector.md.
+_PROMPTS_DIR = Path(__file__).parent.parent / "prompts"
 
-Emailurile sunt trimise de clienți care comandă produse textile personalizate.
+_SYSTEM_PROMPT_BASE = (_PROMPTS_DIR / "email_extractor.md").read_text(encoding="utf-8")
 
-Sarcina ta: analizează corpul emailului și extrage FIECARE tip de produs menționat ca o cerere separată.
-
-Pentru fiecare cerere returnează un obiect JSON cu:
-- "product_type": tipul de produs (folosește EXACT una din valorile din lista furnizată)
-- "description": descrierea brută a acelui produs din email (1-2 propoziții)
-- "prefilled_state": obiect cu câmpurile pe care le poți extrage cu CERTITUDINE din email,
-  folosind EXACT cheile din schema furnizată
-
-IMPORTANT:
-- Nu inventa valori. Dacă un câmp nu e menționat explicit în email sau imagini, NU îl include.
-- Folosește EXACT cheile din schema — nu traduce, nu redenumi.
-- Returnează un array JSON, chiar dacă e gol ([]).
-- Răspunde EXCLUSIV cu JSON valid, fără text suplimentar."""
-
-_SYSTEM_PROMPT_WITH_IMAGES = _SYSTEM_PROMPT_BASE + """
-
-Emailul conține imagini cu mockup-uri de produs. Folosește-le DOAR pentru câmpurile vizuale \
-(culoare_principala, branding.pozitie, branding.culori) care NU sunt menționate explicit în textul emailului.
-
-PRIORITATE: textul emailului are întotdeauna prioritate față de imagini. \
-Dacă există o contradicție între ce scrie clientul și ce arată imaginea, folosește valoarea din text."""
+_SYSTEM_PROMPT_WITH_IMAGES = (
+    _SYSTEM_PROMPT_BASE
+    + "\n\n"
+    + (_PROMPTS_DIR / "email_extractor_imagini.md").read_text(encoding="utf-8")
+)
 
 
 @dataclass
