@@ -88,6 +88,44 @@ def test_parse_report_strips_markdown_code_fences(schema_tricou, spec_active_bra
     assert len(report.nevizibil) == 2
 
 
+@pytest.fixture
+def spec_polo_fara_branding():
+    return {
+        "culoare_principala": "alb", "guler": "polo", "maneci": "lungi",
+        "material": "bumbac 100%", "croiala": "slim",
+        "branding": {
+            "pozitie": "fără branding", "tehnica": None,
+            "culori": [], "dimensiuni_aproximative": None,
+        },
+    }
+
+
+def test_parse_report_uses_corrected_block_when_model_self_corrects(schema_tricou, spec_polo_fara_branding):
+    # Real Sonnet 4.6 response (2026-10-22): an invalid first block, a
+    # correction note, then the corrected block.
+    raw = (FIXTURES / "inspector_corectie_doua_blocuri.txt").read_text(encoding="utf-8")
+    report = inspector.parse_report(raw, schema_tricou, spec_polo_fara_branding)
+    assert [i.camp for i in report.conform] == ["culoare_principala"]
+    assert [i.camp for i in report.neconform] == ["guler", "maneci", "croiala", "branding.pozitie"]
+    assert [i.camp for i in report.nevizibil] == ["material"]
+
+
+def test_parse_report_prefers_last_valid_block(schema_tricou, spec_polo_fara_branding):
+    first_valid = (FIXTURES / "inspector_fara_branding.json").read_text(encoding="utf-8")
+    corrected = (FIXTURES / "inspector_corectie_doua_blocuri.txt").read_text(encoding="utf-8")
+    raw = f"{first_valid}\n\nNotă: raportul de mai jos e cel corect.\n\n{corrected}"
+    report = inspector.parse_report(raw, schema_tricou, spec_polo_fara_branding)
+    assert [i.camp for i in report.conform] == ["culoare_principala"]
+    assert len(report.neconform) == 4
+
+
+def test_parse_report_truncated_response_reports_invalid_json(schema_tricou, spec_active_branding):
+    full = (FIXTURES / "inspector_full.json").read_text(encoding="utf-8")
+    truncated = full[: len(full) - 150]
+    with pytest.raises(ValueError, match="nu e JSON valid"):
+        inspector.parse_report(truncated, schema_tricou, spec_active_branding)
+
+
 import base64
 
 

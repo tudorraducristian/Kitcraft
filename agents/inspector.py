@@ -30,28 +30,45 @@ class ValidationReport:
     nevizibil: list[ValidationItem] = field(default_factory=list)
 
 
-def _extract_json(text: str) -> dict:
-    """Try a direct parse; if it fails (e.g. markdown code fences or prose
-    around the object), fall back to the outermost {...} block."""
-    text = text.strip()
-    try:
-        return json.loads(text)
-    except json.JSONDecodeError:
-        pass
-    start = text.find("{")
-    end = text.rfind("}")
-    if start == -1 or end == -1 or end <= start:
-        raise ValueError(f"Răspunsul Inspector nu e JSON valid: {text[:80]!r}")
-    try:
-        return json.loads(text[start : end + 1])
-    except json.JSONDecodeError as e:
-        raise ValueError(f"Răspunsul Inspector nu e JSON valid: {e}") from e
+REPORT_KEYS = ("conform", "neconform", "nevizibil")
+
+
+def _report_candidates(text: str) -> list[dict]:
+    """Every top-level JSON object in the response that looks like a report.
+    The model sometimes self-corrects: a first block, a correction note, then
+    a second block. Markdown fences and prose around the objects are skipped."""
+    decoder = json.JSONDecoder()
+    candidates: list[dict] = []
+    i = text.find("{")
+    while i != -1:
+        try:
+            obj, end = decoder.raw_decode(text, i)
+        except json.JSONDecodeError:
+            i = text.find("{", i + 1)
+            continue
+        if isinstance(obj, dict) and any(k in obj for k in REPORT_KEYS):
+            candidates.append(obj)
+        i = text.find("{", end)
+    return candidates
 
 
 def parse_report(text: str, schema: dict, spec: dict) -> ValidationReport:
-    data = _extract_json(text)
+    """Validate the candidate blocks from last to first; the last valid one
+    wins, since a later block is the model's correction of an earlier one."""
+    candidates = _report_candidates(text)
+    if not candidates:
+        raise ValueError(f"Răspunsul Inspector nu e JSON valid: {text.strip()[:80]!r}")
+    first_error: ValueError | None = None
+    for data in reversed(candidates):
+        try:
+            return _build_report(data, schema, spec)
+        except ValueError as e:
+            first_error = first_error or e
+    raise first_error
 
-    for key in ("conform", "neconform", "nevizibil"):
+
+def _build_report(data: dict, schema: dict, spec: dict) -> ValidationReport:
+    for key in REPORT_KEYS:
         if key not in data:
             raise ValueError(f"Lipsește lista '{key}' din răspuns")
         if not isinstance(data[key], list):

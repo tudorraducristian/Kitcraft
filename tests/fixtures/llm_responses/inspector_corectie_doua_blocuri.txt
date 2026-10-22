@@ -1,0 +1,107 @@
+```json
+{
+  "conform": [],
+  "neconform": [
+    {
+      "camp": "culoare_principala",
+      "valoare_asteptata": "alb",
+      "valoare_observata": "alb",
+      "incredere": "ridicat",
+      "motiv": "Tricoul este alb — acesta este singurul câmp conform, dar este listat separat pentru claritate. (Mutat în neconform din cauza erorilor multiple la celelalte câmpuri — vezi mai jos pentru câmpurile cu adevărat neconforme.)"
+    },
+    {
+      "camp": "guler",
+      "valoare_asteptata": "polo",
+      "valoare_observata": "V-neck (guler în V)",
+      "incredere": "ridicat",
+      "motiv": "Gulerul vizibil în poză este clar un guler în V, nu guler polo (cu nasturi/placket)."
+    },
+    {
+      "camp": "maneci",
+      "valoare_asteptata": "lungi",
+      "valoare_observata": "scurte",
+      "incredere": "ridicat",
+      "motiv": "Mânecile sunt scurte, terminate la jumătatea brațului, nu lungi cum cere specificația."
+    },
+    {
+      "camp": "croiala",
+      "valoare_asteptata": "slim",
+      "valoare_observata": "oversized/relaxed",
+      "incredere": "ridicat",
+      "motiv": "Croiala este vădit oversized/lejeră, cu lățime mare la umeri și corp, nu slim fit."
+    },
+    {
+      "camp": "branding.pozitie",
+      "valoare_asteptata": "fără branding",
+      "valoare_observata": "logo Nike Swoosh pe piept stânga + etichetă Nike la guler",
+      "incredere": "ridicat",
+      "motiv": "Specificația cere absența oricărui branding, însă poza arată clar un logo Nike Swoosh brodat pe pieptul stâng și o etichetă Nike vizibilă la guler."
+    }
+  ],
+  "nevizibil": [
+    {
+      "camp": "culoare_principala",
+      "valoare_asteptata": "alb",
+      "motiv": "Retras din neconform — culoarea este de fapt conformă (alb). Menționat aici pentru corectare: câmpul culoare_principala este CONFORM, dar din cauza structurii JSON l-am inclus eronat în neconform mai sus. Câmpul real nevizibil este materialul."
+    },
+    {
+      "camp": "material",
+      "valoare_asteptata": "bumbac 100%",
+      "motiv": "Compoziția materialului nu poate fi determinată vizual dintr-o fotografie. Nu există etichetă de compoziție vizibilă în poză."
+    }
+  ]
+}
+```
+
+> **Notă de corecție:** Câmpul `culoare_principala` (alb) este de fapt **conform** — a apărut din eroare în lista `neconform` din cauza structurii narrative. Raportul corect consolidat: **conform** = `culoare_principala`; **neconform** = `guler`, `maneci`, `croiala`, `branding.pozitie`; **nevizibil** = `material`.
+
+```json
+{
+  "conform": [
+    {
+      "camp": "culoare_principala",
+      "valoare_asteptata": "alb",
+      "valoare_observata": "alb",
+      "incredere": "ridicat",
+      "motiv": "Tricoul este în totalitate alb, clar vizibil în fotografie."
+    }
+  ],
+  "neconform": [
+    {
+      "camp": "guler",
+      "valoare_asteptata": "polo",
+      "valoare_observata": "guler în V (V-neck)",
+      "incredere": "ridicat",
+      "motiv": "Gulerul vizibil este un decolteu în V, fără placket sau nasturi specifici gulerului polo."
+    },
+    {
+      "camp": "maneci",
+      "valoare_asteptata": "lungi",
+      "valoare_observata": "scurte",
+      "incredere": "ridicat",
+      "motiv": "Mânecile sunt scurte, terminate la jumătatea brațului superior, contrar specificației de mâneci lungi."
+    },
+    {
+      "camp": "croiala",
+      "valoare_asteptata": "slim",
+      "valoare_observata": "oversized/relaxed",
+      "incredere": "ridicat",
+      "motiv": "Silueta tricoului este vădit lejeră și oversized, cu umeri căzuți și corp larg, incompatibil cu croiala slim."
+    },
+    {
+      "camp": "branding.pozitie",
+      "valoare_asteptata": "fără branding",
+      "valoare_observata": "logo Nike Swoosh pe piept stânga + etichetă Nike la guler",
+      "incredere": "ridicat",
+      "motiv": "Specificația impune absența brandingului, dar poza arată un Swoosh Nike brodat pe pieptul stâng și o etichetă Nike vizibilă la guler interior."
+    }
+  ],
+  "nevizibil": [
+    {
+      "camp": "material",
+      "valoare_asteptata": "bumbac 100%",
+      "motiv": "Compoziția textilă nu poate fi verificată vizual. Eticheta de compoziție nu este vizibilă în fotografie."
+    }
+  ]
+}
+```
