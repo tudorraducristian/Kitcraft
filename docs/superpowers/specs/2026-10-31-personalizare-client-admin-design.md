@@ -1,7 +1,7 @@
 # Kitcraft: personalizarea pe cont de client, design
 
 **Data:** 2026-10-31
-**Status:** aprobat de Tudor pe 2026-10-31
+**Status:** înlocuit pe 2026-11-05 de `2026-11-05-kitcraft-client-admin-inspector-design.md`. Rămâne doar ca istoric. A fost aprobat de Tudor pe 2026-10-31.
 **Sursa:** propunerile profesoarei de licență, aduse de Tudor pe 31 octombrie
 2026, și brainstormingul din aceeași zi.
 
