@@ -162,4 +162,9 @@ def ensure_staff_accounts(conn: sqlite3.Connection) -> None:
         if not password:
             log.warning("Contul de %s nu e creat: lipsește %s din .env.", role, password_var)
             continue
-        create_user(conn, os.environ.get(email_var, default_email), password, role)
+        try:
+            create_user(conn, os.environ.get(email_var, default_email), password, role)
+        except (ValueError, EmailTaken) as exc:
+            # O parolă prea scurtă în .env nu trebuie să oprească pornirea aplicației.
+            log.warning("Contul de %s nu e creat, verifică %s și %s din .env: %s",
+                        role, email_var, password_var, exc or "adresa e deja folosită")

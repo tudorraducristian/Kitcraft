@@ -75,3 +75,12 @@ def test_ensure_staff_accounts_skips_without_password(conn, monkeypatch):
     monkeypatch.delenv("KITCRAFT_INSPECTOR_PASSWORD", raising=False)
     ensure_staff_accounts(conn)
     assert conn.execute("SELECT COUNT(*) FROM users").fetchone()[0] == 0
+
+
+def test_ensure_staff_accounts_skips_a_too_short_password(conn, monkeypatch, caplog):
+    monkeypatch.setenv("KITCRAFT_ADMIN_PASSWORD", "scurta")
+    monkeypatch.setenv("KITCRAFT_INSPECTOR_PASSWORD", "parola-insp")
+    ensure_staff_accounts(conn)
+    assert authenticate(conn, "inspector@kitcraft.local", "parola-insp").role == "inspector"
+    assert conn.execute("SELECT COUNT(*) FROM users WHERE role = 'admin'").fetchone()[0] == 0
+    assert "KITCRAFT_ADMIN_PASSWORD" in caplog.text

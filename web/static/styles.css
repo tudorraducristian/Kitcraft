@@ -117,6 +117,7 @@ a:hover { color: var(--c-accent); }
   font-size: 14px;
 }
 .topbar__meta { color: var(--c-text-soft); font-size: 14px; }
+.topbar__user { display: flex; align-items: center; gap: var(--s-3); margin: 0; }
 
 /* ---------- Cards & sections ---------- */
 .card {
