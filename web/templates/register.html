@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Cont nou{% endblock %}
+{% block topbar_meta %}Cont de client{% endblock %}
+{% block content %}
+<main class="page page--narrow">
+    <h1>Fă-ți cont de client</h1>
+    {% if error %}
+    <div class="callout" role="alert" style="border-left-color: var(--c-danger); background: var(--c-danger-soft); color: var(--c-danger-ink);">{{ error }}</div>
+    {% endif %}
+    <form class="card" method="post" action="/register">
+        <div class="field">
+            <label class="field__label" for="email">Email</label>
+            <input class="input" type="email" id="email" name="email" required autocomplete="username" value="{{ values.email or '' }}">
+        </div>
+        <div class="field">
+            <label class="field__label" for="password">Parolă</label>
+            <input class="input" type="password" id="password" name="password" required minlength="{{ min_password }}" autocomplete="new-password">
+            <span class="field__hint">Cel puțin {{ min_password }} caractere.</span>
+        </div>
+        <div class="field">
+            <label class="field__label" for="brand_name">Numele brandului</label>
+            <input class="input" type="text" id="brand_name" name="brand_name" required value="{{ values.brand_name or '' }}">
+        </div>
+        <div class="row-actions">
+            <button type="submit" class="btn">Fă contul</button>
+            <a href="/login" class="btn btn--ghost">Am deja cont</a>
+        </div>
+    </form>
+</main>
+{% endblock %}

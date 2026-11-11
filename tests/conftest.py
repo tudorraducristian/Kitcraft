@@ -19,14 +19,24 @@ def conn():
 from fastapi.testclient import TestClient
 
 
+ADMIN_EMAIL = "admin@kitcraft.local"
+ADMIN_PASSWORD = "test-admin-pass"
+INSPECTOR_EMAIL = "inspector@kitcraft.local"
+INSPECTOR_PASSWORD = "test-inspector-pass"
+
+
 @pytest.fixture
-def client(tmp_path, monkeypatch):
-    """FastAPI TestClient bound to an isolated DB + uploads dir."""
+def anon_client(tmp_path, monkeypatch):
+    """FastAPI TestClient bound to an isolated DB + uploads dir, not logged in."""
     db_path = tmp_path / "test.db"
     uploads_dir = tmp_path / "uploads"
     uploads_dir.mkdir()
     monkeypatch.setenv("DATABASE_PATH", str(db_path))
     monkeypatch.setenv("UPLOADS_DIR", str(uploads_dir))
+    monkeypatch.setenv("KITCRAFT_ADMIN_EMAIL", ADMIN_EMAIL)
+    monkeypatch.setenv("KITCRAFT_ADMIN_PASSWORD", ADMIN_PASSWORD)
+    monkeypatch.setenv("KITCRAFT_INSPECTOR_EMAIL", INSPECTOR_EMAIL)
+    monkeypatch.setenv("KITCRAFT_INSPECTOR_PASSWORD", INSPECTOR_PASSWORD)
 
     from web import app as web_app
     # Force re-evaluation of env-derived module constants
@@ -34,6 +44,46 @@ def client(tmp_path, monkeypatch):
     importlib.reload(web_app)
     web_app.init_database()
     return TestClient(web_app.app)
+
+
+def _login(test_client: TestClient, email: str, password: str) -> TestClient:
+    r = test_client.post("/login", data={"email": email, "password": password},
+                         follow_redirects=False)
+    assert r.status_code == 303, f"login failed for {email}: {r.status_code}"
+    return test_client
+
+
+@pytest.fixture
+def client(anon_client):
+    """The old fixture name: a TestClient logged in as admin."""
+    return _login(anon_client, ADMIN_EMAIL, ADMIN_PASSWORD)
+
+
+@pytest.fixture
+def login_as(anon_client):
+    """Factory: a fresh TestClient on the same app, logged in with the given role.
+    For `client` it registers a new account with a unique email."""
+    from web import app as web_app
+    counter = {"n": 0}
+
+    def _make(role: str) -> TestClient:
+        c = TestClient(web_app.app)
+        if role == "admin":
+            return _login(c, ADMIN_EMAIL, ADMIN_PASSWORD)
+        if role == "inspector":
+            return _login(c, INSPECTOR_EMAIL, INSPECTOR_PASSWORD)
+        if role == "client":
+            counter["n"] += 1
+            r = c.post("/register", data={
+                "email": f"client{counter['n']}@brand.ro",
+                "password": "parola-buna",
+                "brand_name": f"Brand {counter['n']}",
+            }, follow_redirects=False)
+            assert r.status_code == 303, f"register failed: {r.status_code}"
+            return c
+        raise ValueError(f"unknown role: {role}")
+
+    return _make
 
 
 class _FakeLLM:

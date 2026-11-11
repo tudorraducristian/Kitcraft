@@ -126,6 +126,29 @@ def delete_session(conn: sqlite3.Connection, token: str | None) -> None:
     conn.commit()
 
 
+_PUBLIC_PATHS = ("/login", "/register", "/logout", "/healthz")
+_ROLE_PREFIXES = (("/client", "client"), ("/inspector", "inspector"))
+_HOMES = {"admin": "/", "client": "/client/cereri", "inspector": "/inspector/"}
+
+
+def _under(path: str, prefix: str) -> bool:
+    return path == prefix or path.startswith(prefix + "/")
+
+
+def required_role(path: str) -> str | None:
+    """Rolul cerut de o cale. `None` înseamnă public. Tot ce nu e scris altfel e al adminului."""
+    if path in _PUBLIC_PATHS or path.startswith("/static/"):
+        return None
+    for prefix, role in _ROLE_PREFIXES:
+        if _under(path, prefix):
+            return role
+    return "admin"
+
+
+def home_for(role: str) -> str:
+    return _HOMES[role]
+
+
 def ensure_staff_accounts(conn: sqlite3.Connection) -> None:
     """Creează o singură dată contul de admin și pe cel de inspector, din `.env`."""
     staff = (

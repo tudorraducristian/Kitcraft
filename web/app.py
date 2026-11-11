@@ -9,7 +9,7 @@ from typing import Any
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from PIL import Image, ImageChops
@@ -29,6 +29,7 @@ from email_agent.gmail_client import GmailClient, authorized_address
 from email_agent import email_extractor
 from image_matcher.engine import analyze_sim, compare_real
 from schemas import loader
+from web import auth
 
 
 BASE_DIR = Path(__file__).parent
@@ -96,11 +97,37 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
     return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
 
 
+@app.middleware("http")
+async def require_login(request: Request, call_next):
+    """Fiecare rol ajunge doar la paginile lui. Tot ce nu e scris altfel e al adminului."""
+    with get_conn() as conn:
+        user = auth.user_for_token(conn, request.cookies.get(auth.SESSION_COOKIE))
+    request.state.user = user
+    path = request.url.path
+    role = auth.required_role(path)
+    if role is None:
+        return await call_next(request)
+    if user is None:
+        if request.headers.get("HX-Request"):
+            return Response(status_code=200, headers={"HX-Redirect": "/login"})
+        return RedirectResponse("/login", status_code=303)
+    if path == "/":
+        if user.role != "admin":
+            return RedirectResponse(auth.home_for(user.role), status_code=303)
+        return await call_next(request)
+    if user.role != role:
+        return await http_exception_handler(
+            request, StarletteHTTPException(403, "Pagina nu e disponibilă pentru contul tău.")
+        )
+    return await call_next(request)
+
+
 def init_database() -> None:
     conn = sqlite3.connect(DATABASE_PATH)
     try:
         conn.executescript(SCHEMA_PATH.read_text(encoding="utf-8"))
         conn.commit()
+        auth.ensure_staff_accounts(conn)
     finally:
         conn.close()
 
@@ -788,3 +815,12 @@ def email_image(gmail_id: str, idx: int):
     if not path.is_file():
         raise HTTPException(status_code=404, detail="Imagine indisponibilă")
     return FileResponse(path)
+
+
+# Rutele noi stau în web/routes_*.py. Importul e la sfârșit, ca la
+# importlib.reload(web_app) aplicația nouă să primească din nou routerele.
+from web import routes_auth, routes_client, routes_inspector  # noqa: E402
+
+app.include_router(routes_auth.router)
+app.include_router(routes_client.router)
+app.include_router(routes_inspector.router)

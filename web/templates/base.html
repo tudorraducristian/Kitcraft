@@ -15,6 +15,12 @@
                 Ciptronic Validator
             </a>
             <span class="topbar__meta">{% block topbar_meta %}{% endblock %}</span>
+            {% if request.state.user %}
+            <form class="topbar__user" method="post" action="/logout">
+                <span class="topbar__meta">{{ request.state.user.email }}</span>
+                <button type="submit" class="btn btn--ghost">Ieși</button>
+            </form>
+            {% endif %}
         </div>
     </header>
     {% block content %}{% endblock %}
