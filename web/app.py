@@ -78,7 +78,7 @@ def connected_email() -> str | None:
         return None
 
 
-app = FastAPI(title="Ciptronic Product Validator")
+app = FastAPI(title="Kitcraft")
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 
 

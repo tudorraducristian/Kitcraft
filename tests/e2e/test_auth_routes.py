@@ -93,3 +93,8 @@ def test_logout_invalidates_the_session_on_the_server(login_as):
 def test_htmx_request_without_session_redirects_the_whole_page(anon_client):
     r = anon_client.post("/email-agent/fetch", headers={"HX-Request": "true"}, follow_redirects=False)
     assert r.headers["HX-Redirect"] == "/login"
+
+
+def test_app_is_called_kitcraft(anon_client):
+    html = anon_client.get("/login").text
+    assert "Kitcraft" in html and "Ciptronic" not in html

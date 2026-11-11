@@ -1,11 +1,11 @@
-# Ciptronic Product Validator
+# Kitcraft
 
 Aplicație web locală pentru specificarea și validarea vizuală a produselor personalizate. Două fluxuri paralele:
 
 1. **Discovery + Inspector** (flux text) — descriere vagă a clientului → JSON structurat, prin întrebări țintite (max 5 runde). Apoi: JSON + 1-4 poze ale produsului finit → raport pe trei zone (conform / neconform / nevizibil).
 2. **Image Match** (flux imagine) — mockup / artwork → criterii vizuale extrase automat. Apoi: criterii + poză produs real → raport tabelar cu match-uri și discrepanțe, criteriu cu criteriu.
 
-Stack: Python 3.10+, FastAPI, HTMX, Jinja2, SQLite, Anthropic Claude Sonnet 4.6. Rulează local, single-user.
+Stack: Python 3.10+, FastAPI, HTMX, Jinja2, SQLite, Anthropic Claude Sonnet 4.6. Rulează local, cu trei roluri: client, admin și inspector. Nu expune serverul pe rețea fără protecție.
 
 ## Setup
 
@@ -20,13 +20,28 @@ cp .env.example .env
 # editează .env și pune ANTHROPIC_API_KEY
 ```
 
+### Conturile
+
+Aplicația are trei roluri. Clientul își face singur cont, din pagina `/register`.
+Adminul și inspectorul au câte un singur cont, creat la prima pornire din `.env`:
+
+```
+KITCRAFT_ADMIN_PASSWORD=<parola ta, cel puțin 8 caractere>
+KITCRAFT_INSPECTOR_PASSWORD=<altă parolă, cel puțin 8 caractere>
+```
+
+Emailurile implicite sunt `admin@kitcraft.local` și `inspector@kitcraft.local`. Se pot
+schimba cu `KITCRAFT_ADMIN_EMAIL` și `KITCRAFT_INSPECTOR_EMAIL`. Fără parole în `.env`,
+aplicația pornește, dar conturile de admin și inspector nu există. Un cont deja creat
+nu se schimbă dacă modifici apoi `.env`.
+
 ## Run
 
 ```bash
 .venv\Scripts\uvicorn.exe main:app --reload
 ```
 
-Deschide http://localhost:8000. Landing-ul îți cere să alegi între flux text și flux imagine.
+Deschide http://localhost:8000. Intri cu contul de admin, iar landing-ul îți cere să alegi între flux text și flux imagine.
 
 Image_matcher Streamlit (dev tool standalone, rămâne separat):
 
